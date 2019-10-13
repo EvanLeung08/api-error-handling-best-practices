@@ -3,7 +3,7 @@ There're some best practices of error handling for External API and make you sim
 
 # **TEST CASE**
 
-## **external-api-error-handling-simple**
+## **1.external-api-error-handling-simple**
 - 1.InvalidAuthenticationException
   - Request Method: Get
   - Request URL: http://localhost:8081/quota 
@@ -43,7 +43,7 @@ There're some best practices of error handling for External API and make you sim
    - Request Method: Get
    - Request URL: http://localhost:8081/quota?customerId=123456
    - Request parameters:
-     - Header: api-profile-id:null
+     - Header: api-profile-id:123456
    - Result: 
    ```java
    {
@@ -53,7 +53,75 @@ There're some best practices of error handling for External API and make you sim
    	"errorDetails": null
    }
    ```
-## **Use traceId to troubleshoot issue**   
+### **Troubleshooting - Use traceId to troubleshoot issue**   
 It's very easy to troubleshoot by traceId in your log file now.
 ![issue1](external-api-error-handling-simple/image/issue.png)
 
+## **2.external-api-error-handling-plus**
+- 1.InvalidAuthenticationException
+  - Request Method: Get
+  - Request URL: http://localhost:8082/quota 
+  - Request parameters:
+    - Header: api-profile-id:null
+  - Result: 
+  ```java
+  {
+    "errorCode": 400,
+    "errorDetails": [
+        {
+            "code": "EQ4002",
+            "message": "身份验证失败."
+        }
+    ],
+    "errorMessage": "Bad Request",
+    "traceId": "ea8ca2d3-9ee0-4592-a970-262f2e163400"
+  }
+  ```
+- 2.Validation Exception
+  - Request Method: Post
+  - Request URL: http://localhost:8081/quota 
+  - Request parameters:
+    - Header: api-profile-id:123456
+    - Request body:
+    ```java
+    {"customerId":""}
+    ```
+  - Result: 
+  ```java
+  {
+      "traceId": "3281d092-4247-4c2f-87c0-ec626869b593",
+      "errorCode": 400,
+      "errorMessage": "Bad Request",
+      "errorStacks": [
+          {
+              "code": "EQ4003",
+              "message": "请求校验失败."
+          }
+      ]
+  }
+  ```
+- 3.FacadeException
+   - Request Method: Get
+   - Request URL: http://localhost:8081/quota?customerId=123456
+   - Request parameters:
+     - Header: api-profile-id:123456
+   - Result: 
+   ```java
+  {
+      "traceId": "f29b09b3-2c05-4aab-b97d-378cd316e548",
+      "errorCode": 400,
+      "errorMessage": "Bad Request",
+      "errorStacks": [
+          {
+              "code": "EQ4001",
+              "message": "无效账号."
+          }
+      ]
+  }
+  ```
+ ### **Troubleshooting - Use traceId to troubleshoot issue**   
+Setup your traceId  ```[%X{api-trace-id}]```  to output pattern in logback file
+```xml
+<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} [%X{api-trace-id}] - %msg%n</pattern>
+```
+ ![issue1](external-api-error-handling-plus/image/issue.png) 
